@@ -85,6 +85,6 @@ htmlcov/
 .tmp.driveupload/
 
 # Models
-models/
+trainings/
 
 *.docx

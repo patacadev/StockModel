@@ -1,0 +1,90 @@
+# Archivos específicos de Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Archivos de configuración de Jupyter
+.jupyter/
+*.jupyter/
+
+# Archivos de historial de comandos en Jupyter
+.history
+
+# Archivos de entorno virtual
+venv/
+env/
+.venv/
+.env/
+
+# Archivos de configuración de IPython
+.ipython/
+
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de datos de entorno
+.env
+.env.local
+*.env
+*.env.local
+*.env.*
+
+# Archivos generados por Jupyter Lab
+.lab/
+.jupyterlab-workspaces/
+
+# Archivos de configuración y otros generados automáticamente
+*.DS_Store
+*.log
+*.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+*.swp
+*.swo
+*.bak
+*.orig
+*.tmp
+*.~*
+
+# Archivos generados por editores de texto
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Archivos de paquetes o builds
+dist/
+build/
+*.egg-info/
+*.whl
+*.wheel
+
+# Archivos de cache de pip y conda
+pip-log.txt
+pip-delete-this-directory.txt
+__pypackages__/
+*.egg
+*.egg-info/
+.installed.cfg
+*.ini
+*.cfg
+*.cover
+*.coverage
+.cache
+pytest_cache/
+htmlcov/
+.tox/
+.nox/
+
+# Google Drive
+.tmp.drivedownload/
+.tmp.driveupload/
+
+# Models
+models/
+
+*.docx

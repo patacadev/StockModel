@@ -58,12 +58,12 @@ class StockModel:
                 print(f"Error preparing {ticker} data. {error}")
         # Actualizamos metadata
         self.train_metadata["start_date"] = str(train_dates[0])
-        self.train_metadata["end_date"] = str(train_dates[1])
+        self.train_metadata["end_date"] = str(train_dates[-1])
         self.train_metadata["tickers"] = combined_data['Ticker'].unique().tolist()
         return data_dict
     
     ## TRAIN
-    def train_multi_model(self, data_dict, patience=10, batch_size=32, epochs=100, graph=False):
+    def train_multi_model(self, data_dict, patience=10, batch_size=32, epochs=100, graph=False, layers=1, units_per_layer=128):
         """
         Train LSTM model and return itself and its history
         Parameters:
@@ -76,15 +76,15 @@ class StockModel:
         first_dict_element = next(iter(data_dict))
         dict_size = len(data_dict)
         # LSTM model
-        model = Sequential([
-            Input(shape=(data_dict[first_dict_element]["X_train"].shape[1], data_dict[first_dict_element]["X_train"].shape[2])),
-            # 1st LSTM layer
-            LSTM(512, return_sequences=True),
-            Dropout(0.3),
-            LSTM(512, return_sequences=False),
-            Dropout(0.3),
-            Dense(1)
-        ])
+        model = Sequential()
+        model.add(Input(shape=(data_dict[first_dict_element]["X_train"].shape[1], data_dict[first_dict_element]["X_train"].shape[2])))
+        for i in range(layers-1):
+            model.add(LSTM(units_per_layer, return_sequences=True))
+            model.add(Dropout(0.3))
+        # Last LSTM layer
+        model.add(LSTM(units_per_layer, return_sequences=False))
+        model.add(Dropout(0.3))
+        model.add(Dense(1))
         
         model.summary()
 
@@ -108,14 +108,19 @@ class StockModel:
 
         return model
 
-    def train(self, combined_data, patience, epochs=100, graph=False):
-        # Save metadata
-        self.train_metadata["patience"] = patience
-        self.train_metadata["max_epochs"] = epochs
-        data_dict = self._preprocess(combined_data)
-        self.model = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph)
-        if self.export:
-            self.save()
+    def train(self, combined_data, patience, epochs=100, graph=False, layers=1, units_per_layer=128):
+        if layers > 0:
+            # Save metadata
+            self.train_metadata["patience"] = patience
+            self.train_metadata["max_epochs"] = epochs
+            self.train_metadata["layers"] = layers
+            self.train_metadata["units_per_layer"] = units_per_layer
+            data_dict = self._preprocess(combined_data)
+            self.model = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph, layers=layers, units_per_layer=units_per_layer)
+            if self.export:
+                self.save()
+        else:
+            raise Exception("Model has to have at least one LSTM layer")
 
     def predict(self, data, ticker_name=None, graph=False):
         """

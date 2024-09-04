@@ -130,6 +130,8 @@ def get_stock_data(ticker_names, interval="1d", start_date=None, end_date=None):
     Parameters:
         ticker_names (List <str>): Stock symbols to get
         interval (str): Aggregation interval to use (1d, 1h or 5m)
+        start_date (str): Starting date of the data retrieval. Format YYYY-MM-DD
+        end_date (str): Ending date of the data retrieval. Format YYYY-MM-DD
     Returns:
         combined_data (pd.DataFrame): dataframe with new column 'Ticker'
     """

@@ -45,14 +45,12 @@ def calc_MACD(df, ema_rapida=12, ema_lenta=26, señal=9):
     # Calcula las EMAs
     df['EMA_Rapida'] = df['Close'].ewm(span=ema_rapida, adjust=False).mean()
     df['EMA_Lenta'] = df['Close'].ewm(span=ema_lenta, adjust=False).mean()
-    # Calcula el MACD
+    # Calcula el MACD, señal e histograma
     df['MACD'] = df['EMA_Rapida'] - df['EMA_Lenta']
-    # Calcula la Línea de Señal
     df['Signal_Line'] = df['MACD'].ewm(span=señal, adjust=False).mean()
-    # Calcula el Histograma MACD
     df['MACD_Hist'] = df['MACD'] - df['Signal_Line']
-    # Elimina las columnas intermedias de EMA
-    df.drop(['EMA_Rapida', 'EMA_Lenta'], axis=1, inplace=True)
+    # Elimina las columnas auxiliares de EMA y Signal
+    df.drop(['EMA_Rapida', 'EMA_Lenta', 'Signal_Line'], axis=1, inplace=True)
     return df
 
 def calc_relative_volume(df):

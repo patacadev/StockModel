@@ -159,8 +159,13 @@ def model_predict(model, X, y, dates, target_scaler, ticker_name=None, graph=Fal
             y (np.numpy)
             dates (pd.DateTimeIndex)
             target_scaler (MinMaxScaler)
+            ticker_name (str): only for the graph
+            graph (boolean): whether to show the graph or not
         Returns:
             df_predicciones (df.DataFrame): Date, pred, real
+            loss (float)
+            mape (float)
+            r2 (float)
     """
     print(f"Target min {target_scaler.data_min_}")
     print(f"Target max {target_scaler.data_max_}")

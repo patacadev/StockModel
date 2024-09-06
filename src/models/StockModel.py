@@ -303,11 +303,11 @@ class StockModel:
         else:
             print("Error saving model: Model was not trained")
 
-    def load(self, id):
+    def load(self, path):
         """
         Load model from disk
         """
-        print(f"Saving model from {id}...")
+        print(f"Saving model from {path}...")
         # Cargamos también los parámetros del optimizador para continuar entrenando si se desea
-        self.model = load_model("trainings/"+id+"/model.keras")
+        self.model = load_model(path+"/model.keras")
         self.model.summary()

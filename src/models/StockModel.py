@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 
 from datetime import datetime
-import json
-import os
+import json, os, time
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.models import Sequential
@@ -138,11 +137,24 @@ class StockModel:
             self.train_metadata["layers"] = layers
             self.train_metadata["units_per_layer"] = units_per_layer
             data_dict = self._preprocess(combined_data)
+            # Entrenamos y guardamos tiempo transcurrido
+            inicio = time.time()
             self.model, history_dict = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph, layers=layers, units_per_layer=units_per_layer)
-            self.train_metadata["history"] = history_dict
+            fin = time.time()
+            tiempo = fin-inicio
+            horas = int(tiempo // 3600)
+            minutos = int((tiempo % 3600) // 60)
+            segundos = int(tiempo % 60)
+            if horas > 0:
+                tiempo = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+            else:
+                tiempo = f"{minutos:02d}:{segundos:02d}"
+            self.train_metadata["train_time"] = tiempo
+            # Select best epoch of every ticker and get the mean
             mean_loss, mean_val_loss, mean_mape, mean_val_mape = mean_train_metrics(history_dict)
             self.train_metadata["mean_metrics"] = {"loss": mean_loss, "val_loss": mean_val_loss,
                                                      "mape": mean_mape, "val_mape": mean_val_mape}
+            self.train_metadata["history"] = history_dict
             if self.export:
                 self.save()
             return history_dict

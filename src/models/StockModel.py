@@ -12,26 +12,53 @@ from tensorflow.keras.callbacks import EarlyStopping
 from .preprocess import prepare_data_train, prepare_data_predict
 from ..visualization.visualization import model_predict, grafica_train
 
-def mean_train_metrics(history_dict):
-    # Inicializar listas para almacenar los mejores valores por métrica
+def train_metrics_summary(history_dict):
     best_losses = []
     best_val_losses = []
     best_mapes = []
     best_val_mapes = []
 
-    # Recorrer el diccionario para encontrar los mejores valores para cada ticker
-    for ticker, metrics in history_dict.items():
-        best_losses.append(min(metrics['loss']))  # Mejor (mínimo) loss
-        best_val_losses.append(min(metrics['val_loss']))  # Mejor val_loss
-        best_mapes.append(min(metrics['mape']))  # Mejor mape
-        best_val_mapes.append(min(metrics['val_mape']))  # Mejor val_mape
+    best_metrics_per_ticker = {}
 
-    # Calcular la media de los mejores valores para cada métrica
-    mean_best_loss = np.mean(best_losses)
-    mean_best_val_loss = np.mean(best_val_losses)
-    mean_best_mape = np.mean(best_mapes)
-    mean_best_val_mape = np.mean(best_val_mapes)
-    return mean_best_loss, mean_best_val_loss, mean_best_mape, mean_best_val_mape
+    # Recopilar las mejores métricas por ticker y métricas globales
+    for ticker, metrics in history_dict.items():
+        best_loss = min(metrics['loss'])
+        best_val_loss = min(metrics['val_loss'])
+        best_mape = min(metrics['mape'])
+        best_val_mape = min(metrics['val_mape'])
+
+        best_losses.append(best_loss)
+        best_val_losses.append(best_val_loss)
+        best_mapes.append(best_mape)
+        best_val_mapes.append(best_val_mape)
+
+        best_metrics_per_ticker[ticker] = {
+            "loss": best_loss,
+            "val_loss": best_val_loss,
+            "mape": best_mape,
+            "val_mape": best_val_mape
+        }
+
+    # Cálculo de la media y mediana
+    mean_dict = {
+        "loss": np.mean(best_losses),
+        "val_loss": np.mean(best_val_losses),
+        "mape": np.mean(best_mapes),
+        "val_mape": np.mean(best_val_mapes)
+    }
+
+    median_dict = {
+        "loss": np.median(best_losses),
+        "val_loss": np.median(best_val_losses),
+        "mape": np.median(best_mapes),
+        "val_mape": np.median(best_val_mapes)
+    }
+
+    return {
+        "mean": mean_dict,
+        "median": median_dict,
+        "tickers": best_metrics_per_ticker
+    }
 
 class StockModel:
     def __init__(self, window_size, feature_columns, target_name, export=False):
@@ -79,7 +106,6 @@ class StockModel:
         # Actualizamos metadata
         self.train_metadata["start_date"] = str(train_dates[0])
         self.train_metadata["end_date"] = str(train_dates[-1])
-        self.train_metadata["tickers"] = combined_data['Ticker'].unique().tolist()
         return data_dict
     
     ## TRAIN
@@ -146,14 +172,13 @@ class StockModel:
             minutos = int((tiempo % 3600) // 60)
             segundos = int(tiempo % 60)
             if horas > 0:
-                tiempo = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+                tiempo = f"{horas:02d}h {minutos:02d}min {segundos:02d}s"
             else:
-                tiempo = f"{minutos:02d}:{segundos:02d}"
+                tiempo = f"{minutos:02d}min {segundos:02d}s"
             self.train_metadata["train_time"] = tiempo
             # Select best epoch of every ticker and get the mean
-            mean_loss, mean_val_loss, mean_mape, mean_val_mape = mean_train_metrics(history_dict)
-            self.train_metadata["mean_metrics"] = {"loss": mean_loss, "val_loss": mean_val_loss,
-                                                     "mape": mean_mape, "val_mape": mean_val_mape}
+            summary = train_metrics_summary(history_dict)
+            self.train_metadata["train_summary"] = summary
             self.train_metadata["history"] = history_dict
             if self.export:
                 self.save()

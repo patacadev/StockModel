@@ -162,6 +162,7 @@ class StockModel:
             self.train_metadata["max_epochs"] = epochs
             self.train_metadata["layers"] = layers
             self.train_metadata["units_per_layer"] = units_per_layer
+            self.train_metadata["number_tickers"] = len(combined_data['Ticker'].unique())
             data_dict = self._preprocess(combined_data)
             # Entrenamos y guardamos tiempo transcurrido
             inicio = time.time()
@@ -242,11 +243,18 @@ class StockModel:
         mean_mape = np.mean([metrics['mape'] for metrics in metrics_dict.values()])
         mean_r2 = np.mean([metrics['r2'] for metrics in metrics_dict.values()])
 
+        median_loss = np.median([metrics['loss'] for metrics in metrics_dict.values()])
+        median_mape = np.median([metrics['mape'] for metrics in metrics_dict.values()])
+        median_r2 = np.median([metrics['r2'] for metrics in metrics_dict.values()])
+
+
         mean_metrics = {'loss': mean_loss, 'mape': mean_mape, 'r2': mean_r2}
+        median_metrics = {'loss': median_loss, 'mape': median_mape, 'r2': median_r2}
+        summary = {"mean": mean_metrics, "median": median_metrics, "number_tickers": len(metrics_dict)}
         if self.export:
             json.dump(metrics_dict, open(self.folder_path+"evaluation.txt", 'w'), indent=4)
-            json.dump(mean_metrics, open(self.folder_path+"evaluation_mean.txt", 'w'), indent=4)
-        return metrics_dict, mean_metrics
+            json.dump(summary, open(self.folder_path+"evaluation_summary.txt", 'w'), indent=4)
+        return metrics_dict, summary
     
     def grid_search_window_size(self, combined_data, test_data, window_size_options, patience=5, epochs=100, graph=False):
         """

@@ -13,6 +13,27 @@ from tensorflow.keras.callbacks import EarlyStopping
 from .preprocess import prepare_data_train, prepare_data_predict
 from ..visualization.visualization import model_predict, grafica_train
 
+def mean_train_metrics(history_dict):
+    # Inicializar listas para almacenar los mejores valores por métrica
+    best_losses = []
+    best_val_losses = []
+    best_mapes = []
+    best_val_mapes = []
+
+    # Recorrer el diccionario para encontrar los mejores valores para cada ticker
+    for ticker, metrics in history_dict.items():
+        best_losses.append(min(metrics['loss']))  # Mejor (mínimo) loss
+        best_val_losses.append(min(metrics['val_loss']))  # Mejor val_loss
+        best_mapes.append(min(metrics['mape']))  # Mejor mape
+        best_val_mapes.append(min(metrics['val_mape']))  # Mejor val_mape
+
+    # Calcular la media de los mejores valores para cada métrica
+    mean_best_loss = np.mean(best_losses)
+    mean_best_val_loss = np.mean(best_val_losses)
+    mean_best_mape = np.mean(best_mapes)
+    mean_best_val_mape = np.mean(best_val_mapes)
+    return mean_best_loss, mean_best_val_loss, mean_best_mape, mean_best_val_mape
+
 class StockModel:
     def __init__(self, window_size, feature_columns, target_name, export=False):
         print(f"Initializing model:\n - Window size: {window_size}\n - Features: {str(feature_columns)}\n - Target: {target_name}")
@@ -91,6 +112,7 @@ class StockModel:
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mape'])
 
         i = 0
+        history_dict = {}
         for ticker, content in data_dict.items():
             i += 1
             print(f"--- {i}/{dict_size} Training model for {ticker} ---")
@@ -100,13 +122,13 @@ class StockModel:
             early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True, mode='min')
             history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, 
                                 callbacks=[early_stopping], shuffle=False, verbose=1)
-            data_dict[ticker]["history"] = history
+            # Save training metrics
+            history_dict[ticker] = {"loss": history.history['loss'], "val_loss": history.history['val_loss'],
+                                    "mape": history.history['mape'], "val_mape": history.history['val_mape']}
             if graph:
                 grafica_train(history)
-            
-            #evaluate_model(model, content["X_test"], content["y_test"])
 
-        return model
+        return model, history_dict
 
     def train(self, combined_data, patience, epochs=100, graph=False, layers=1, units_per_layer=128):
         if layers > 0:
@@ -116,9 +138,14 @@ class StockModel:
             self.train_metadata["layers"] = layers
             self.train_metadata["units_per_layer"] = units_per_layer
             data_dict = self._preprocess(combined_data)
-            self.model = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph, layers=layers, units_per_layer=units_per_layer)
+            self.model, history_dict = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph, layers=layers, units_per_layer=units_per_layer)
+            self.train_metadata["history"] = history_dict
+            mean_loss, mean_val_loss, mean_mape, mean_val_mape = mean_train_metrics(history_dict)
+            self.train_metadata["mean_metrics"] = {"loss": mean_loss, "val_loss": mean_val_loss,
+                                                     "mape": mean_mape, "val_mape": mean_val_mape}
             if self.export:
                 self.save()
+            return history_dict
         else:
             raise Exception("Model has to have at least one LSTM layer")
 
@@ -231,10 +258,11 @@ class StockModel:
         else:
             print("Error saving model: Model was not trained")
 
-    def load(self, name):
+    def load(self, id):
         """
         Load model from disk
         """
-        print(f"Saving model from {name}...")
-        self.model = load_model("trainings/"+name)
+        print(f"Saving model from {id}...")
+        # Cargamos también los parámetros del optimizador para continuar entrenando si se desea
+        self.model = load_model("trainings/"+id+"/model.keras")
         self.model.summary()

@@ -178,7 +178,7 @@ def model_predict(model, X, y, dates, target_scaler, ticker_name=None, graph=Fal
 
     # Calculating MSE, MAPE and R2
     loss = mean_squared_error(y_rescaled, predictions_rescaled)
-    mape = mean_absolute_percentage_error(y_rescaled, predictions_rescaled)
+    mape = mean_absolute_percentage_error(y_rescaled, predictions_rescaled) * 100
     r2 = r2_score(y_rescaled, predictions_rescaled)
 
     print(f'Loss: {loss:.4f} MAPE: {mape:.4f} R2: {r2:.4f}')

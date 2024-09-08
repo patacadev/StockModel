@@ -255,40 +255,6 @@ class StockModel:
             json.dump(metrics_dict, open(self.folder_path+"evaluation.txt", 'w'), indent=4)
             json.dump(summary, open(self.folder_path+"evaluation_summary.txt", 'w'), indent=4)
         return metrics_dict, summary
-    
-    def grid_search_window_size(self, combined_data, test_data, window_size_options, patience=5, epochs=100, graph=False):
-        """
-        Train but doing a grid search for the window size. Returns the best window size and the grid results.
-        """
-        best_window_size = None
-        best_loss = float('inf')
-        best_model = None
-
-        # Diccionario para almacenar resultados del Grid Search
-        grid_results = {}
-
-        for window_size in window_size_options:
-            print(f"\n--- Running Grid Search for window_size: {window_size} ---")
-            self.window_size = window_size
-
-            # Entrenar el modelo
-            self.train(combined_data, patience=patience, epochs=epochs, graph=graph)
-
-            mean_loss, mean_mape, mean_r2 = self.evaluate_many(test_data, graph)
-            print(f"Evaluation result for window_size {window_size}: Loss = {mean_loss}, MAPE = {mean_mape}, R2 = {mean_r2}")
-            
-            grid_results[window_size] = (mean_loss, mean_mape, mean_r2)
-            
-            if mean_loss < best_loss:
-                best_loss = mean_loss
-                best_window_size = window_size
-                best_model = self.model
-
-        print(f"\nBest window_size found: {best_window_size} with loss: {best_loss}")
-        self.window_size = best_window_size
-        self.model = best_model
-
-        return best_window_size, grid_results
 
     def save(self):
         """

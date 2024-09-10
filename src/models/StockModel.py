@@ -109,7 +109,7 @@ class StockModel:
         return data_dict
     
     ## TRAIN
-    def train_multi_model(self, data_dict, patience=10, batch_size=32, epochs=100, graph=False, layers=1, units_per_layer=128):
+    def train_multi_model(self, data_dict, patience=10, batch_size=32, epochs=100, graph=False, layers=1, units_per_layer=128, verbose=1):
         """
         Train LSTM model and return itself and its history
         Parameters:
@@ -146,7 +146,7 @@ class StockModel:
             # Definir el Early Stopping basado en la métrica de validación (para cada fit)
             early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True, mode='min')
             history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, 
-                                callbacks=[early_stopping], shuffle=False, verbose=1)
+                                callbacks=[early_stopping], shuffle=False, verbose=verbose)
             # Save training metrics
             history_dict[ticker] = {"loss": history.history['loss'], "val_loss": history.history['val_loss'],
                                     "mape": history.history['mape'], "val_mape": history.history['val_mape']}
@@ -155,7 +155,7 @@ class StockModel:
 
         return model, history_dict
 
-    def train(self, combined_data, patience, epochs=100, graph=False, layers=1, units_per_layer=128):
+    def train(self, combined_data, patience, epochs=100, graph=False, layers=1, units_per_layer=128, verbose=1):
         if layers > 0:
             # Save metadata
             self.train_metadata["patience"] = patience
@@ -166,7 +166,7 @@ class StockModel:
             data_dict = self._preprocess(combined_data)
             # Entrenamos y guardamos tiempo transcurrido
             inicio = time.time()
-            self.model, history_dict = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph, layers=layers, units_per_layer=units_per_layer)
+            self.model, history_dict = self.train_multi_model(data_dict, patience=patience, epochs=epochs, graph=graph, layers=layers, units_per_layer=units_per_layer, verbose=verbose)
             fin = time.time()
             tiempo = fin-inicio
             horas = int(tiempo // 3600)
